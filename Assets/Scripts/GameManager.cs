@@ -428,7 +428,7 @@ public class GameManager : MonoBehaviour
                 created.Clear();
             }
 
-            Debug.Log(_responsible + " : " + _strings.Count);
+            //Debug.Log(_responsible + " : " + _strings.Count);
 
         }
 
