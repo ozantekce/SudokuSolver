@@ -21,6 +21,15 @@ public class GameManager : MonoBehaviour
     public static List<int>[] Columns { get => columns; set => columns = value; }
     public Slot[] Slots { get => _slots; set => _slots = value; }
 
+
+
+    private static Dictionary<int, List<int>> indexSquarePairs = new Dictionary<int, List<int>>();
+
+    private static Dictionary<int, List<int>> indexRowPairs = new Dictionary<int, List<int>>();
+
+    private static Dictionary<int, List<int>> indexColPairs = new Dictionary<int, List<int>>();
+
+
     public static void CreateSets()
     {
 
@@ -34,6 +43,20 @@ public class GameManager : MonoBehaviour
         squares[6] = new List<int>() { 54, 55, 56, 63, 64, 65, 72, 73, 74 };
         squares[7] = new List<int>() { 57, 58, 59, 66, 67, 68, 75, 76, 77 };
         squares[8] = new List<int>() { 60, 61, 62, 69, 70, 71, 78, 79, 80 };
+
+        for (int i = 0; i < 81; i++)
+        {
+            List<int> temp = null;
+            foreach (List<int> sqr in squares)
+            {
+                if (sqr.Contains(i))
+                {
+                    temp = sqr;
+                    break;
+                }
+            }
+            indexSquarePairs[i] = temp;
+        }
 
 
         rows = new List<int>[9];
@@ -49,6 +72,24 @@ public class GameManager : MonoBehaviour
 
         }
 
+
+        for (int i = 0; i < 81; i++)
+        {
+            List<int> temp = null;
+            foreach (List<int> sqr in rows)
+            {
+                if (sqr.Contains(i))
+                {
+                    temp = sqr;
+                    break;
+                }
+            }
+            indexRowPairs[i] = temp;
+        }
+
+
+
+
         columns = new List<int>[9];
         for (int i = 0; i < 9; i++)
         {
@@ -58,6 +99,22 @@ public class GameManager : MonoBehaviour
                 columns[i].Add(j * 9 + i);
             }
         }
+
+        for (int i = 0; i < 81; i++)
+        {
+            List<int> temp = null;
+            foreach (List<int> sqr in columns)
+            {
+                if (sqr.Contains(i))
+                {
+                    temp = sqr;
+                    break;
+                }
+            }
+            indexColPairs[i] = temp;
+        }
+
+
     }
 
     private void Start()
@@ -163,9 +220,6 @@ public class GameManager : MonoBehaviour
     public void OnClickSolveButton()
     {
 
-
-        _isWorked = true;
-
         int fullSlots = 0;
 
         for (int i = 0;i < _slots.Length; i++)
@@ -176,39 +230,39 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        /*
-        if(fullSlots < 17)
-        {
-            _isWorked=false;
-            // it is not valid game show a notice
-            return;
-        }*/
 
-        string initialString = "";
+        StringBuilder initialString = new StringBuilder();
 
         for (int i = 0; i < _slots.Length; i++)
         {
 
-            if (_slots[i].Value != 0)
-            {
-                initialString+=_slots[i].Value;
-            }
-            else
-            {
-                initialString += 0;
-            }
+            initialString.Append(_slots[i].Value);
 
         }
 
 
         Debug.Log(initialString);
 
-        Queue<string> q = Solve(initialString);
 
-        foreach(string sb in q)
+        finalStr = "";
+
+
+
+        
+        Recursive(initialString, 0);
+        Debug.Log(finalStr);
+        
+
+
+        /*
+        Queue<string> q = Solve(initialString.ToString());
+        */
+
+        for (int i = 0; i < 81; i++)
         {
-            Debug.Log(sb);
+            _slots[i].Value = (finalStr[i] - 48);
         }
+
 
 
 
@@ -235,15 +289,14 @@ public class GameManager : MonoBehaviour
 
                 if (current[i] == '0')
                 {
-                    string created = current;
-                    
                     for (int j = 1; j <= 9; j++)
                     {
+                        string created = current;
                         StringBuilder sb = new StringBuilder(created);
-                        sb[i] = ((char)(j + 48));
-                        created = sb.ToString();
-                        if (IsValid(created))
+                        if (IsValid(sb,i,j))
                         {
+                            sb[i] = ((char)(j + 48));
+                            created = sb.ToString();
                             createdQueue.Enqueue(created);
                         }
                     }
@@ -256,7 +309,7 @@ public class GameManager : MonoBehaviour
             }
             queue = new Queue<string>(createdQueue);
 
-            Debug.Log("size : "+queue.Count);
+            //Debug.Log("size : "+queue.Count);
 
         }
 
@@ -265,67 +318,78 @@ public class GameManager : MonoBehaviour
     }
 
 
-
-    private HashSet<char> _checker = new HashSet<char>();
-    private bool IsValid(string str)
+    private bool IsValid(StringBuilder str, int position, int val)
     {
-        
-        // Check rows
-        for (int i = 0; i<rows.Length ; i++)
-        {
-            _checker.Clear();
-            foreach (int j in rows[i])
-            {
-                if (str[j] != '0')
-                {
-                    if (!_checker.Add(str[j]))
-                    {
-                        //Debug.Log(str + " row : " + i+" "+j);
 
-                        return false;
-                    }
-                }
+        char newC = ((char)(val + 48));
+
+
+        // Check rows
+        foreach (int j in indexRowPairs[position])
+        {
+            if (str[j] == newC)
+            {
+                return false;
             }
         }
 
         // Check squares
-        for (int i = 0; i < squares.Length; i++)
+        foreach (int j in indexSquarePairs[position])
         {
-            _checker.Clear();
-            foreach (int j in squares[i])
+            if (str[j] == newC)
             {
-                if (str[j] != '0')
-                {
-                    if (!_checker.Add(str[j]))
-                    {
-                        //Debug.Log(str + " square : " + j);
-                        return false;
-                    }
-                }
+                return false;
             }
-
         }
 
         // Check cols
-        for (int i = 0; i < 9; i++)
+        foreach (int j in indexColPairs[position])
         {
-            _checker.Clear();
-            for (int j = 0; j < 9; j++)
+            if (str[j] == newC)
             {
-                if (str[j * 9 + i] != '0')
-                {
-                    if (!_checker.Add(str[j * 9 + i]))
-                    {
-                        //Debug.Log(str + " col : " + j);
-                        return false;
-                    }
-                }
-
+                return false;
             }
         }
 
+
         return true;
 
+
+    }
+
+
+
+    private static string finalStr;
+    private bool Recursive(StringBuilder str,int position)
+    {
+        //Debug.Log(str +" "+size);
+
+        if(position >= 81)
+        {
+            finalStr = str.ToString();
+            return true;
+        }
+
+
+        if(str[position] != '0')
+        {
+            return Recursive(str, position+1);
+        }
+
+        for (int i = 1; i < 10; i++)
+        {
+            if (IsValid(str,position,i))
+            {
+                str[position] = (char)(i + 48);
+                if (Recursive(str, position + 1))
+                {
+                    return true;
+                }
+            }
+        }
+        str[position] = '0';
+
+        return false;
 
     }
 
