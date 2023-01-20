@@ -20,8 +20,7 @@ public class GameManager : MonoBehaviour
     public static List<int>[] Rows { get => rows; set => rows = value; }
     public static List<int>[] Columns { get => columns; set => columns = value; }
     public Slot[] Slots { get => _slots; set => _slots = value; }
-
-
+    public static Slot SelectedSlot { get => _selectedSlot; set => _selectedSlot = value; }
 
     private static Dictionary<int, List<int>> indexSquarePairs = new Dictionary<int, List<int>>();
 
@@ -190,7 +189,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    private Slot _selectedSlot = null;
+    private static Slot _selectedSlot = null;
 
     public void OnClickSlot(int slot)
     {
@@ -220,13 +219,12 @@ public class GameManager : MonoBehaviour
     public void OnClickSolveButton()
     {
 
-        int fullSlots = 0;
-
+        //check game is valid
         for (int i = 0;i < _slots.Length; i++)
         {
             if(_slots[i].Value != 0)
             {
-                fullSlots++;
+                SetValueForCheckValid(new Vector2Int(i,_slots[i].Value));
             }
         }
 
@@ -235,6 +233,14 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < _slots.Length; i++)
         {
+            if (_slots[i].Potentials.Count == 0)
+            {
+                // not valid game
+                Debug.Log("not valid");
+                StartCoroutine(ShowTextRoutine());
+                OnClickResetButton();
+                return;
+            }
 
             initialString.Append(_slots[i].Value);
 
@@ -245,8 +251,6 @@ public class GameManager : MonoBehaviour
 
 
         finalStr = "";
-
-
 
         
         Recursive(initialString, 0);
@@ -396,7 +400,7 @@ public class GameManager : MonoBehaviour
 
 
 
-    private void SetValueForSolve(Vector2Int seqValPair)
+    private void SetValueForCheckValid(Vector2Int seqValPair)
     {
         _slots[seqValPair.x].Potentials.Clear();
 
@@ -452,6 +456,18 @@ public class GameManager : MonoBehaviour
     }
 
 
+
+    [SerializeField]
+    private GameObject text;
+
+    private IEnumerator ShowTextRoutine()
+    {
+
+        text.SetActive(true);
+        yield return new WaitForSeconds(1f);
+        text.SetActive(false);
+
+    }
 
 
 

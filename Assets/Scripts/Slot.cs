@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class Slot : MonoBehaviour
+public class Slot : MonoBehaviour, ISelectHandler
 {
 
 
@@ -54,5 +55,8 @@ public class Slot : MonoBehaviour
         _potentials.Add(value);
     }
 
-
+    public void OnSelect(BaseEventData eventData)
+    {
+        GameManager.SelectedSlot = this;
+    }
 }
