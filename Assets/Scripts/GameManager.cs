@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -175,33 +176,159 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        /*
         if(fullSlots < 17)
         {
             _isWorked=false;
             // it is not valid game show a notice
             return;
-        }
+        }*/
+
+        string initialString = "";
 
         for (int i = 0; i < _slots.Length; i++)
         {
 
             if (_slots[i].Value != 0)
             {
-                SetValueForSolve(new Vector2Int(i, _slots[i].Value));
+                initialString+=_slots[i].Value;
+            }
+            else
+            {
+                initialString += 0;
             }
 
         }
 
 
-        string str = Solve();
+        Debug.Log(initialString);
 
-        for (int i = 0; i < str.Length; i++)
+        Queue<string> q = Solve(initialString);
+
+        foreach(string sb in q)
         {
-            _slots[i].Value = (str[i]-48);
+            Debug.Log(sb);
         }
 
 
+
     }
+
+
+
+
+    private Queue<string> Solve(string intial)
+    {
+
+        Queue<string> queue = new Queue<string>();
+
+        queue.Enqueue(intial);
+
+        for (int i = 0; i < 81; i++)
+        {
+            Queue<string> createdQueue = new Queue<string>();
+
+            while(queue.Count > 0)
+            {
+                string current;
+                current = queue.Dequeue();
+
+                if (current[i] == '0')
+                {
+                    string created = current;
+                    
+                    for (int j = 1; j <= 9; j++)
+                    {
+                        StringBuilder sb = new StringBuilder(created);
+                        sb[i] = ((char)(j + 48));
+                        created = sb.ToString();
+                        if (IsValid(created))
+                        {
+                            createdQueue.Enqueue(created);
+                        }
+                    }
+                }
+                else
+                {
+                    createdQueue.Enqueue(current);
+                }
+
+            }
+            queue = new Queue<string>(createdQueue);
+
+            Debug.Log("size : "+queue.Count);
+
+        }
+
+        return queue;
+
+    }
+
+
+
+    private HashSet<char> _checker = new HashSet<char>();
+    private bool IsValid(string str)
+    {
+        
+        // Check rows
+        for (int i = 0; i<rows.Length ; i++)
+        {
+            _checker.Clear();
+            foreach (int j in rows[i])
+            {
+                if (str[j] != '0')
+                {
+                    if (!_checker.Add(str[j]))
+                    {
+                        //Debug.Log(str + " row : " + i+" "+j);
+
+                        return false;
+                    }
+                }
+            }
+        }
+
+        // Check squares
+        for (int i = 0; i < squares.Length; i++)
+        {
+            _checker.Clear();
+            foreach (int j in squares[i])
+            {
+                if (str[j] != '0')
+                {
+                    if (!_checker.Add(str[j]))
+                    {
+                        //Debug.Log(str + " square : " + j);
+                        return false;
+                    }
+                }
+            }
+
+        }
+
+        // Check cols
+        for (int i = 0; i < 9; i++)
+        {
+            _checker.Clear();
+            for (int j = 0; j < 9; j++)
+            {
+                if (str[j * 9 + i] != '0')
+                {
+                    if (!_checker.Add(str[j * 9 + i]))
+                    {
+                        //Debug.Log(str + " col : " + j);
+                        return false;
+                    }
+                }
+
+            }
+        }
+
+        return true;
+
+
+    }
+
 
 
 
@@ -257,201 +384,6 @@ public class GameManager : MonoBehaviour
 
         _slots[seqValPair.x].Potentials.Add(seqValPair.y);
 
-
-    }
-
-
-
-    private string Solve()
-    {
-
-        Solver solver = new Solver(this);
-        solver.Solve();
-        List<string> strings = solver.Strings;
-
-        for (int i = 0; i < strings.Count; i++)
-        {
-            if (IsValid(strings[i]))
-            {
-                return strings[i];
-            }
-        }
-
-        return string.Empty;
-    }
-
-
-    private HashSet<char> _checker = new HashSet<char>();
-    public bool IsValid(string str)
-    {
-
-        // Check Squares
-        for (int i = 0; i < squares.Length; i++)
-        {
-            _checker.Clear();
-            foreach (int s in squares[i])
-            {
-                if (!_checker.Add((str[s])))
-                {
-                    return false;
-                }
-            }
-
-        }
-        return true;
-
-    }
-
-
-    private class Solver
-    {
-
-        public GameManager gameManager;
-
-        private RowSolver [] _rowSolvers;
-        public Solver(GameManager gameManager)
-        {
-            this.gameManager = gameManager;
-            _rowSolvers = new RowSolver[9];
-
-            for (int i = 0; i < _rowSolvers.Length; i++)
-            {
-                _rowSolvers[i] = new RowSolver(this.gameManager,GameManager.Rows[i]);
-                _rowSolvers[i].FindRows();
-            }
-
-
-        }
-
-        private List<string> _strings;
-        public void Solve()
-        {
-            _strings = new List<string>();
-            _strings.Add(string.Empty);
-
-            List<string> created = new List<string>();
-
-            foreach (RowSolver rowSolver in _rowSolvers)
-            {
-                for (int i = 0; i < _strings.Count; i++)
-                {
-
-                    foreach (string s in rowSolver.Strings)
-                    {
-                        string current = _strings[i];
-                        current += s;
-                        if (isValid(current))
-                        {
-                            created.Add(current);
-                        }
-                    }
-                }
-                _strings.Clear();
-                _strings.AddRange(created);
-                created.Clear();
-            }
-
-
-
-        }
-
-
-
-
-
-        private HashSet<char> _checker = new HashSet<char>();
-
-        public List<string> Strings { get => _strings; set => _strings = value; }
-
-        private bool isValid(string str)
-        {
-            int size = str.Length / 9;
-
-            for (int i = 0;i < 9; i++)
-            {
-                _checker.Clear();
-                for(int j = 0;j < size; j++)
-                {
-                    if (!_checker.Add(str[j*9+i]))
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-
-    }
-
-
-    private class RowSolver
-    {
-        public GameManager gameManager;
-        private List<int> _responsible;
-
-        public RowSolver(GameManager gameManager, List<int> row)
-        {
-            this.gameManager = gameManager;
-            _responsible = new List<int>();
-            _responsible.AddRange(row);
-        }
-
-        private List<string> _strings;
-
-
-        public void FindRows()
-        {
-            _strings = new List<string>();
-            _strings.Add(string.Empty);
-
-            List<string> created = new List<string>();
-
-            foreach (int index in _responsible)
-            {
-                for (int i = 0; i < _strings.Count; i++)
-                {
-                    
-                    foreach (int p in gameManager.Slots[index].Potentials)
-                    {
-                        string current = _strings[i];
-                        current += p;
-                        if (isValid(current))
-                        {
-                            created.Add(current);
-                        }
-                    }
-                }
-                _strings.Clear();
-                _strings.AddRange(created);
-                created.Clear();
-            }
-
-            //Debug.Log(_responsible + " : " + _strings.Count);
-
-        }
-
-
-        private HashSet<char> _checker = new HashSet<char>();
-
-        public List<string> Strings { get => _strings; set => _strings = value; }
-
-        private bool isValid(string str)
-        {
-            _checker.Clear();
-            for (int i = 0; i < str.Length; i++)
-            {
-
-                if (!_checker.Add(str[i]))
-                {
-                    return false;
-                }
-
-            }
-
-            return true;
-        }
 
     }
 
