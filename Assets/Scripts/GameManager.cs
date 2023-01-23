@@ -220,6 +220,10 @@ public class GameManager : MonoBehaviour
 
     public void OnClickSolveButton()
     {
+        if (_isWorked)
+        {
+            return;
+        }
 
         //check game is valid
         for (int i = 0;i < _slots.Length; i++)
@@ -427,10 +431,7 @@ public class GameManager : MonoBehaviour
     {
         //Debug.Log(str +" "+size);
 
-        if (!string.IsNullOrEmpty(finalStr))
-        {
-            return true;
-        }
+
 
         if(position >= 81)
         {
@@ -466,10 +467,7 @@ public class GameManager : MonoBehaviour
     {
         //Debug.Log(str +" "+size);
 
-        if (!string.IsNullOrEmpty(finalStr))
-        {
-            return true;
-        }
+
 
         if (position < 0)
         {
