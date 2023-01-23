@@ -290,6 +290,12 @@ public class GameManager : MonoBehaviour
         }
 
         _isWorked = false;
+
+        t1.Abort();
+        t2.Abort();
+        t3.Abort();
+        t4.Abort();
+
         Debug.Log(finalStr);
     }
 
