@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -248,29 +250,86 @@ public class GameManager : MonoBehaviour
 
 
         Debug.Log(initialString);
-
+        GameManager.initialString = initialString.ToString();
 
         finalStr = "";
 
         
-        Recursive(initialString, 0);
-        Debug.Log(finalStr);
-        
+        StartCoroutine(SolveRoutine());
 
 
-        /*
-        Queue<string> q = Solve(initialString.ToString());
-        */
+    }
+
+
+    private IEnumerator SolveRoutine()
+    {
+        _isWorked = true;
+
+        Thread t1 = new Thread(new ThreadStart(Solver1));
+        Thread t2 = new Thread(new ThreadStart(Solver2));
+        Thread t3 = new Thread(new ThreadStart(Solver3));
+        Thread t4 = new Thread(new ThreadStart(Solver4));
+
+        t1.Start();
+        t2.Start();
+        t3.Start();
+        t4.Start();
+
+        while (string.IsNullOrEmpty(finalStr))
+        {
+            yield return null;
+        }
 
         for (int i = 0; i < 81; i++)
         {
             _slots[i].Value = (finalStr[i] - 48);
         }
 
+        _isWorked = false;
+        Debug.Log(finalStr);
+    }
 
 
+    private static string initialString;
+
+
+
+    private static int[] array1 = { 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    private static void Solver1()
+    {
+        System.Random rnd = new System.Random();
+        array1 = array1.OrderBy(x => rnd.Next()).ToArray();
+        Recursive(new StringBuilder(initialString), 0, array1,1);
+    }
+
+
+    private static int[] array2 = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    private static void Solver2()
+    {
+        System.Random rnd = new System.Random();
+        array2 = array2.OrderBy(x => rnd.Next()).ToArray();
+        Recursive(new StringBuilder(initialString), 0, array2,2);
+    }
+
+    
+    private static int[] array3 = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    private static void Solver3()
+    {
+        System.Random rnd = new System.Random();
+        array3 = array3.OrderBy(x => rnd.Next()).ToArray();
+        RecursiveBack(new StringBuilder(initialString), 80, array3,3);
 
     }
+
+    private static int[] array4 = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    private static void Solver4()
+    {
+        System.Random rnd = new System.Random();
+        array4 = array4.OrderBy(x => rnd.Next()).ToArray();
+        RecursiveBack(new StringBuilder(initialString), 80, array4,4);
+
+    }
+    
 
 
 
@@ -322,7 +381,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    private bool IsValid(StringBuilder str, int position, int val)
+    private static bool IsValid(StringBuilder str, int position, int val)
     {
 
         char newC = ((char)(val + 48));
@@ -364,12 +423,18 @@ public class GameManager : MonoBehaviour
 
 
     private static string finalStr;
-    private bool Recursive(StringBuilder str,int position)
+    private static bool Recursive(StringBuilder str,int position,int[] array,int t)
     {
         //Debug.Log(str +" "+size);
 
+        if (!string.IsNullOrEmpty(finalStr))
+        {
+            return true;
+        }
+
         if(position >= 81)
         {
+            Debug.Log("t : " + t);
             finalStr = str.ToString();
             return true;
         }
@@ -377,15 +442,54 @@ public class GameManager : MonoBehaviour
 
         if(str[position] != '0')
         {
-            return Recursive(str, position+1);
+            return Recursive(str, position+1, array,t);
         }
 
-        for (int i = 1; i < 10; i++)
+        for (int i = 0; i < array.Length; i++)
         {
-            if (IsValid(str,position,i))
+            if (IsValid(str,position,array[i]))
             {
-                str[position] = (char)(i + 48);
-                if (Recursive(str, position + 1))
+                str[position] = (char)(array[i] + 48);
+                if (Recursive(str, position + 1, array,t))
+                {
+                    return true;
+                }
+            }
+        }
+        str[position] = '0';
+
+        return false;
+
+    }
+
+    private static bool RecursiveBack(StringBuilder str, int position, int[] array, int t)
+    {
+        //Debug.Log(str +" "+size);
+
+        if (!string.IsNullOrEmpty(finalStr))
+        {
+            return true;
+        }
+
+        if (position < 0)
+        {
+            Debug.Log("t : " + t);
+            finalStr = str.ToString();
+            return true;
+        }
+
+
+        if (str[position] != '0')
+        {
+            return RecursiveBack(str, position - 1, array, t);
+        }
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (IsValid(str, position, array[i]))
+            {
+                str[position] = (char)(array[i] + 48);
+                if (RecursiveBack(str, position - 1, array, t))
                 {
                     return true;
                 }
