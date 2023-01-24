@@ -14,113 +14,15 @@ public class GameManager : MonoBehaviour
 
     private Slot[] _slots = new Slot[81];
 
-    private static List<int>[] squares;
-    private static List<int>[] rows;
-    private static List<int>[] columns;
 
-    public static List<int>[] Squares { get => squares; set => squares = value; }
-    public static List<int>[] Rows { get => rows; set => rows = value; }
-    public static List<int>[] Columns { get => columns; set => columns = value; }
     public Slot[] Slots { get => _slots; set => _slots = value; }
     public static Slot SelectedSlot { get => _selectedSlot; set => _selectedSlot = value; }
 
-    private static Dictionary<int, List<int>> indexSquarePairs = new Dictionary<int, List<int>>();
-
-    private static Dictionary<int, List<int>> indexRowPairs = new Dictionary<int, List<int>>();
-
-    private static Dictionary<int, List<int>> indexColPairs = new Dictionary<int, List<int>>();
-
-
-    public static void CreateSets()
-    {
-
-        squares = new List<int>[9];
-        squares[0] = new List<int>() { 0, 1, 2, 9, 10, 11, 18, 19, 20 };
-        squares[1] = new List<int>() { 3, 4, 5, 12, 13, 14, 21, 22, 23 };
-        squares[2] = new List<int>() { 6, 7, 8, 15, 16, 17, 24, 25, 26 };
-        squares[3] = new List<int>() { 27, 28, 29, 36, 37, 38, 45, 46, 47 };
-        squares[4] = new List<int>() { 30, 31, 32, 39, 40, 41, 48, 49, 50 };
-        squares[5] = new List<int>() { 33, 34, 35, 42, 43, 44, 51, 52, 53 };
-        squares[6] = new List<int>() { 54, 55, 56, 63, 64, 65, 72, 73, 74 };
-        squares[7] = new List<int>() { 57, 58, 59, 66, 67, 68, 75, 76, 77 };
-        squares[8] = new List<int>() { 60, 61, 62, 69, 70, 71, 78, 79, 80 };
-
-        for (int i = 0; i < 81; i++)
-        {
-            List<int> temp = null;
-            foreach (List<int> sqr in squares)
-            {
-                if (sqr.Contains(i))
-                {
-                    temp = sqr;
-                    break;
-                }
-            }
-            indexSquarePairs[i] = temp;
-        }
-
-
-        rows = new List<int>[9];
-        int index = 0;
-        for (int i = 0; i < 9; i++)
-        {
-            rows[i] = new List<int>();
-            for (int j = 0; j < 9; j++)
-            {
-                rows[i].Add(index);
-                index++;
-            }
-
-        }
-
-
-        for (int i = 0; i < 81; i++)
-        {
-            List<int> temp = null;
-            foreach (List<int> sqr in rows)
-            {
-                if (sqr.Contains(i))
-                {
-                    temp = sqr;
-                    break;
-                }
-            }
-            indexRowPairs[i] = temp;
-        }
-
-
-
-
-        columns = new List<int>[9];
-        for (int i = 0; i < 9; i++)
-        {
-            columns[i] = new List<int>();
-            for (int j = 0; j < 9; j++)
-            {
-                columns[i].Add(j * 9 + i);
-            }
-        }
-
-        for (int i = 0; i < 81; i++)
-        {
-            List<int> temp = null;
-            foreach (List<int> sqr in columns)
-            {
-                if (sqr.Contains(i))
-                {
-                    temp = sqr;
-                    break;
-                }
-            }
-            indexColPairs[i] = temp;
-        }
-
-
-    }
 
     private void Start()
     {
-        CreateSets();
+        Helper.Configurations();
+
         for (int i = 0; i < slots.Length; i++)
         {
 
@@ -135,11 +37,11 @@ public class GameManager : MonoBehaviour
     }
 
 
-    private bool _isWorked;
+    public static bool IsWorked;
 
     private void Update()
     {
-        if (_isWorked)
+        if (IsWorked)
         {
             return;
         }
@@ -195,7 +97,8 @@ public class GameManager : MonoBehaviour
 
     public void OnClickSlot(int slot)
     {
-
+        if (IsWorked)
+            return;
         //Debug.Log(slot);
         _selectedSlot = _slots[slot];
 
@@ -212,7 +115,7 @@ public class GameManager : MonoBehaviour
 
         }
 
-        _isWorked = false;
+        IsWorked = false;
     }
 
 
@@ -220,45 +123,33 @@ public class GameManager : MonoBehaviour
 
     public void OnClickSolveButton()
     {
-        if (_isWorked)
+        if (IsWorked)
         {
             return;
         }
 
-        //check game is valid
-        for (int i = 0;i < _slots.Length; i++)
-        {
-            if(_slots[i].Value != 0)
-            {
-                SetValueForCheckValid(new Vector2Int(i,_slots[i].Value));
-            }
-        }
-
 
         StringBuilder initialString = new StringBuilder();
-
+        // Create String
         for (int i = 0; i < _slots.Length; i++)
         {
-            if (_slots[i].Potentials.Count == 0)
-            {
-                // not valid game
-                Debug.Log("not valid");
-                StartCoroutine(ShowTextRoutine());
-                OnClickResetButton();
-                return;
-            }
-
             initialString.Append(_slots[i].Value);
-
         }
 
-
+        // Check the game is valid
         Debug.Log(initialString);
         GameManager.initialString = initialString.ToString();
 
-        finalStr = "";
+        bool rst = Helper.IsValidGame(GameManager.initialString);
+        if (!rst)
+        {
+            Debug.Log("not valid");
+            StartCoroutine(ShowTextRoutine());
+            OnClickResetButton();
+            return;
+        }
 
-        
+        finalStr = "";
         StartCoroutine(SolveRoutine());
 
 
@@ -267,7 +158,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator SolveRoutine()
     {
-        _isWorked = true;
+        IsWorked = true;
 
         Thread t1 = new Thread(new ThreadStart(Solver1));
         Thread t2 = new Thread(new ThreadStart(Solver2));
@@ -279,17 +170,20 @@ public class GameManager : MonoBehaviour
         t3.Start();
         t4.Start();
 
+        isFounded = false;
+
         while (string.IsNullOrEmpty(finalStr))
         {
             yield return null;
         }
+
 
         for (int i = 0; i < 81; i++)
         {
             _slots[i].Value = (finalStr[i] - 48);
         }
 
-        _isWorked = false;
+        IsWorked = false;
 
         t1.Abort();
         t2.Abort();
@@ -339,57 +233,22 @@ public class GameManager : MonoBehaviour
         RecursiveBack(new StringBuilder(initialString), 80, array4,4);
 
     }
-    
 
-
-
-
-    private Queue<string> Solve(string intial)
+    private static readonly object lockObj = new object();
+    private static bool isFounded = false;
+    private static void SetFinalString(string str , int founder)
     {
-
-        Queue<string> queue = new Queue<string>();
-
-        queue.Enqueue(intial);
-
-        for (int i = 0; i < 81; i++)
+        lock (lockObj)
         {
-            Queue<string> createdQueue = new Queue<string>();
-
-            while(queue.Count > 0)
+            if (!isFounded)
             {
-                string current;
-                current = queue.Dequeue();
-
-                if (current[i] == '0')
-                {
-                    for (int j = 1; j <= 9; j++)
-                    {
-                        string created = current;
-                        StringBuilder sb = new StringBuilder(created);
-                        if (IsValid(sb,i,j))
-                        {
-                            sb[i] = ((char)(j + 48));
-                            created = sb.ToString();
-                            createdQueue.Enqueue(created);
-                        }
-                    }
-                }
-                else
-                {
-                    createdQueue.Enqueue(current);
-                }
-
+                isFounded = true;
+                finalStr = str;
+                Debug.Log("Thread : " + founder);
             }
-            queue = new Queue<string>(createdQueue);
-
-            //Debug.Log("size : "+queue.Count);
 
         }
-
-        return queue;
-
     }
-
 
     private static bool IsValid(StringBuilder str, int position, int val)
     {
@@ -398,7 +257,7 @@ public class GameManager : MonoBehaviour
 
 
         // Check rows
-        foreach (int j in indexRowPairs[position])
+        foreach (int j in Helper.GetRowIndexes(position))
         {
             if (str[j] == newC)
             {
@@ -407,7 +266,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Check squares
-        foreach (int j in indexSquarePairs[position])
+        foreach (int j in Helper.GetSqrIndexes(position))
         {
             if (str[j] == newC)
             {
@@ -416,7 +275,7 @@ public class GameManager : MonoBehaviour
         }
 
         // Check cols
-        foreach (int j in indexColPairs[position])
+        foreach (int j in Helper.GetColIndexes(position))
         {
             if (str[j] == newC)
             {
@@ -437,12 +296,9 @@ public class GameManager : MonoBehaviour
     {
         //Debug.Log(str +" "+size);
 
-
-
         if(position >= 81)
         {
-            Debug.Log("t : " + t);
-            finalStr = str.ToString();
+            SetFinalString(str.ToString(),t);
             return true;
         }
 
@@ -477,8 +333,7 @@ public class GameManager : MonoBehaviour
 
         if (position < 0)
         {
-            Debug.Log("t : " + t);
-            finalStr = str.ToString();
+            SetFinalString(str.ToString(),t);
             return true;
         }
 
@@ -507,64 +362,6 @@ public class GameManager : MonoBehaviour
 
 
 
-
-    private void SetValueForCheckValid(Vector2Int seqValPair)
-    {
-        _slots[seqValPair.x].Potentials.Clear();
-
-        // find row
-        List<int> row = null;
-        foreach (List<int> set in rows)
-        {
-            if (set.Contains(seqValPair.x))
-            {
-                row = set;
-                break;
-            }
-        }
-
-        foreach (int s in row)
-        {
-            _slots[s].Potentials.Remove(seqValPair.y);
-        }
-
-        // find column
-        List<int> column = null;
-        foreach (List<int> set in columns)
-        {
-            if (set.Contains(seqValPair.x))
-            {
-                column = set;
-                break;
-            }
-        }
-        foreach (int s in column)
-        {
-            _slots[s].Potentials.Remove(seqValPair.y);
-        }
-
-        // find square
-        List<int> square = null;
-        foreach (List<int> set in squares)
-        {
-            if (set.Contains(seqValPair.x))
-            {
-                square = set;
-                break;
-            }
-        }
-        foreach (int s in square)
-        {
-            _slots[s].Potentials.Remove(seqValPair.y);
-        }
-
-        _slots[seqValPair.x].Potentials.Add(seqValPair.y);
-
-
-    }
-
-
-
     [SerializeField]
     private GameObject text;
 
@@ -578,5 +375,233 @@ public class GameManager : MonoBehaviour
     }
 
 
+
+
+    private class Helper
+    {
+        private static Dictionary<int, int> rows;
+        private static Dictionary<int, int> cols;
+        private static Dictionary<int, int> sqrs;
+
+        private static Dictionary<int, List<int>> rowValues;
+        private static Dictionary<int, List<int>> colValues;
+        private static Dictionary<int, List<int>> sqrValues;
+
+
+        private static bool isConfigured;
+        public static void Configurations()
+        {
+            if (isConfigured)
+            {
+                return;
+            }
+            isConfigured = true;
+
+
+            tranform2D_1D = new Dictionary<int, Dictionary<int, int>>();
+            tranform1D_2D = new Dictionary<int, int[]>();
+            for (int i = 0; i < 9; i++)
+            {
+                tranform2D_1D.Add(i, new Dictionary<int, int>());
+            }
+
+            rows = new Dictionary<int, int>();
+            cols = new Dictionary<int, int>();
+            sqrs = new Dictionary<int, int>();
+
+
+            int[][] ss = new int[][]{
+               new int[] {0, 1, 2, 9, 10, 11, 18, 19, 20},
+               new int[] {3, 4, 5, 12, 13, 14, 21, 22, 23},
+               new int[] {6, 7, 8, 15, 16, 17, 24, 25, 26},
+               new int[] {27, 28, 29, 36, 37, 38, 45, 46, 47},
+               new int[] {30, 31, 32, 39, 40, 41, 48, 49, 50},
+               new int[] {33, 34, 35, 42, 43, 44, 51, 52, 53},
+               new int[] {54, 55, 56, 63, 64, 65, 72, 73, 74},
+               new int[]  {57, 58, 59, 66, 67, 68, 75, 76, 77},
+               new int[] {60, 61, 62, 69, 70, 71, 78, 79, 80}
+            };
+
+            rowValues = new Dictionary<int, List<int>>();
+            colValues = new Dictionary<int, List<int>>();
+            sqrValues = new Dictionary<int, List<int>>();
+
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    sqrs[ss[i][j]] = i;
+                    int index = ss[i][j];
+                    int r = rows[i] = GetRow(index);
+                    int c = cols[j] = GetCol(index);
+                    int s = i;
+
+                    if (!rowValues.ContainsKey(r)){rowValues[r] = new List<int>();}
+                    rowValues[r].Add(index);
+                    if (!colValues.ContainsKey(c)) { colValues[c] = new List<int>(); }
+                    colValues[c].Add(index);
+                    if (!sqrValues.ContainsKey(s)) { sqrValues[s] = new List<int>(); }
+                    sqrValues[s].Add(index);
+
+                }
+            }
+
+
+            string colsStr = "cols \n";
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    colsStr += sqrValues[i][j]+" , ";
+                }
+                colsStr += "\n";
+            }
+            Debug.Log(colsStr);
+
+
+
+        }
+
+
+        public static int GetSqr(int index)
+        {
+            return sqrs[index];
+        }
+
+        public static int GetRow(int index)
+        {
+            return Index1DTo2D(index)[0];
+        }
+        public static int GetCol(int index)
+        {
+            return Index1DTo2D(index)[1];
+        }
+
+        public static List<int> GetRowIndexes(int index)
+        {
+            return rowValues[GetRow(index)];
+        }
+
+        public static List<int> GetColIndexes(int index)
+        {
+            return colValues[GetCol(index)];
+        }
+
+        public static List<int> GetSqrIndexes(int index)
+        {
+            return sqrValues[GetSqr(index)];
+        }
+
+
+        public static bool IsValidGame(string board)
+        {
+            Checker rowChecker = new Checker();
+            Checker [] colCheckers = new Checker [9];
+            Checker [] sqrCheckers = new Checker [9];
+            int index = 0;
+            for (int i = 0; i < 9; i++)
+            {
+                rowChecker.Clear();
+                for (int j = 0; j < 9; j++)
+                {
+                    if (!rowChecker.Add(board[index] - 48))
+                    {
+                        Debug.Log(i + " " + j+ " "+index);
+                        return false;
+                    }
+                    if (colCheckers[j] == null)
+                    {
+                        colCheckers[j] = new Checker ();
+                    }
+                    if (!colCheckers[j].Add(board[index] - 48))
+                    {
+                        Debug.Log(i + " " + j);
+                        return false;
+                    }
+
+                    if(sqrCheckers[GetSqr(index)] == null)
+                    {
+                        sqrCheckers[GetSqr(index)] = new Checker ();
+                    }
+                    if(!sqrCheckers[GetSqr(index)].Add(board[index] - 48))
+                    {
+                        Debug.Log(i + " " + j);
+                        return false;
+                    }
+                    index++;
+                }
+            }
+
+            return true;
+        }
+
+
+        private static Dictionary<int, Dictionary<int, int>> tranform2D_1D;
+        private static Dictionary<int, int[]> tranform1D_2D;
+        public static int Index2DTo1D(int row, int col)
+        {
+            if (tranform2D_1D[row].ContainsKey(col))
+            {
+                return tranform2D_1D[row][col];
+            }
+            else
+            {
+                int value = row * 9 + col;
+                tranform2D_1D[row][col] = value;
+                tranform1D_2D[value] = new int[2];
+                tranform1D_2D[value][0] = row;
+                tranform1D_2D[value][1] = col;
+                return value;
+            }
+        }
+
+        public static int[] Index1DTo2D(int value)
+        {
+
+            if (tranform1D_2D.ContainsKey(value))
+            {
+                return tranform1D_2D[value];
+            }
+            else
+            {
+                int row = value / 9;
+                int col = value % 9;
+                tranform2D_1D[row][col] = value;
+                tranform1D_2D[value] = new int[2];
+                tranform1D_2D[value][0] = row;
+                tranform1D_2D[value][1] = col;
+                return tranform1D_2D[value];
+            }
+        }
+
+
+        private class Checker
+        {
+
+            private bool[] values;
+
+            public Checker()
+            {
+                values = new bool[10];
+            }
+
+            public bool Add(int val)
+            {
+                if (val == 0)
+                    return true;
+                if (values[val])
+                    return false;
+                values[val] = true;
+                return true;
+            }
+
+            public void Clear()
+            {
+                values = new bool[10];
+            }
+
+        }
+
+    }
 
 }

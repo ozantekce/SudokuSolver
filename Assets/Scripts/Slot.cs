@@ -10,11 +10,9 @@ public class Slot : MonoBehaviour, ISelectHandler
 
     private int _value;
 
-    private ISet<int> _potentials;
 
     public Text valueText;
 
-    public ISet<int> Potentials { get => _potentials; set => _potentials = value; }
     public int Value { 
 
         get => _value;
@@ -35,12 +33,6 @@ public class Slot : MonoBehaviour, ISelectHandler
     public void Create()
     {
 
-        _potentials = new HashSet<int>();
-        for (int i = 1; i < 10; i++)
-        {
-            _potentials.Add(i);
-        }
-
         if(valueText == null)
             valueText = GetComponentInChildren<Text>();
 
@@ -51,12 +43,12 @@ public class Slot : MonoBehaviour, ISelectHandler
     public void Create(int value)
     {
         _value = value;
-        _potentials = new HashSet<int>();
-        _potentials.Add(value);
     }
 
     public void OnSelect(BaseEventData eventData)
     {
+        if (GameManager.IsWorked)
+            return;
         GameManager.SelectedSlot = this;
     }
 }
