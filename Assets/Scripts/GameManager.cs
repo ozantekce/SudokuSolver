@@ -190,7 +190,7 @@ public class GameManager : MonoBehaviour
         }
 
 
-        isFounded = false;
+        isFound = false;
         IsWorked = false;
         
 
@@ -273,7 +273,7 @@ public class GameManager : MonoBehaviour
         }
 
         IsWorked = false;
-        isFounded = false;
+        isFound = false;
 
         Debug.Log(finalStr);
     }
@@ -321,22 +321,21 @@ public class GameManager : MonoBehaviour
 
     private static readonly object lockObj = new object();
 
-    private static bool isFounded = false;
+    private static bool isFound = false;
     private static void SetFinalString(string str , int founder)
     {
-
         lock (lockObj)
         {
-            if (isFounded)
+            if (isFound)
             {
-                Debug.Log(" founded : " + founder);
+                Debug.Log("already found : " + founder);
                 return;
             }
             finalStr = str;
-            isFounded = true;
-            Debug.Log("Thread : " + founder);
+            isFound = true;
+            Debug.Log("Finder Thread : " + founder);
         }
-        Debug.Log(" Lock : " + founder);
+        Debug.Log("Unlocker : " + founder);
 
     }
 
@@ -384,7 +383,7 @@ public class GameManager : MonoBehaviour
     private static string finalStr;
     private static bool Recursive(StringBuilder str,int position,int[] array,int t)
     {
-        if (isFounded)
+        if (isFound)
         {
             return true;
         }
@@ -419,7 +418,7 @@ public class GameManager : MonoBehaviour
 
     private static bool RecursiveBack(StringBuilder str, int position, int[] array, int t)
     {
-        if (isFounded)
+        if (isFound)
         {
             return true;
         }
