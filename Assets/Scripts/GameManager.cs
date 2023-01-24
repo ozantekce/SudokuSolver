@@ -161,7 +161,6 @@ public class GameManager : MonoBehaviour
         t3.Start();
         t4.Start();
 
-        
 
         while (string.IsNullOrEmpty(finalStr))
         {
@@ -231,10 +230,6 @@ public class GameManager : MonoBehaviour
 
 
     }
-
-
-
-
 
     private IEnumerator SolveRoutine()
     {
@@ -339,46 +334,6 @@ public class GameManager : MonoBehaviour
 
     }
 
-    private static bool IsValid(StringBuilder str, int position, int val)
-    {
-
-        char newC = ((char)(val + 48));
-
-
-        // Check rows
-        foreach (int j in Helper.GetRowIndexes(position))
-        {
-            if (str[j] == newC)
-            {
-                return false;
-            }
-        }
-
-        // Check squares
-        foreach (int j in Helper.GetSqrIndexes(position))
-        {
-            if (str[j] == newC)
-            {
-                return false;
-            }
-        }
-
-        // Check cols
-        foreach (int j in Helper.GetColIndexes(position))
-        {
-            if (str[j] == newC)
-            {
-                return false;
-            }
-        }
-
-
-        return true;
-
-
-    }
-
-
 
     private static string finalStr;
     private static bool Recursive(StringBuilder str,int position,int[] array,int t)
@@ -401,7 +356,7 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < array.Length; i++)
         {
-            if (IsValid(str,position,array[i]))
+            if (Helper.IsValid(str,position,array[i]))
             {
                 str[position] = (char)(array[i] + 48);
                 if (Recursive(str, position + 1, array,t))
@@ -436,7 +391,7 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < array.Length; i++)
         {
-            if (IsValid(str, position, array[i]))
+            if (Helper.IsValid(str, position, array[i]))
             {
                 str[position] = (char)(array[i] + 48);
                 if (RecursiveBack(str, position - 1, array, t))
@@ -622,6 +577,42 @@ public class GameManager : MonoBehaviour
                     index++;
                 }
             }
+
+            return true;
+        }
+
+
+        public static bool IsValid(StringBuilder str, int position, int val)
+        {
+            char newC = ((char)(val + 48));
+
+            // Check rows
+            foreach (int j in Helper.GetRowIndexes(position))
+            {
+                if (str[j] == newC)
+                {
+                    return false;
+                }
+            }
+
+            // Check squares
+            foreach (int j in Helper.GetSqrIndexes(position))
+            {
+                if (str[j] == newC)
+                {
+                    return false;
+                }
+            }
+
+            // Check cols
+            foreach (int j in Helper.GetColIndexes(position))
+            {
+                if (str[j] == newC)
+                {
+                    return false;
+                }
+            }
+
 
             return true;
         }
