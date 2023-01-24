@@ -120,6 +120,83 @@ public class GameManager : MonoBehaviour
 
 
     
+    public void OnClickCreateButton(InputField iField)
+    {
+        
+        if (IsWorked || string.IsNullOrEmpty(iField.text))
+        {
+            return;
+        }
+        int fullSlots = int.Parse(iField.text);
+
+        int emptySlots = 81 - fullSlots;
+        int [] randomSlots = new int[81];
+        initialString = "";
+        for (int i = 0;i < randomSlots.Length; i++)
+        {
+            randomSlots[i] = i;
+            initialString += "0";
+        }
+        System.Random rnd = new System.Random();
+        randomSlots = randomSlots.OrderBy(x => rnd.Next()).ToArray();
+
+
+
+        StartCoroutine(CreateRoutine(randomSlots,emptySlots));
+
+
+    }
+
+    private IEnumerator CreateRoutine(int[] randomSlots,int emptySlots)
+    {
+        IsWorked = true;
+
+        Thread t1 = new Thread(new ThreadStart(Solver1));
+        Thread t2 = new Thread(new ThreadStart(Solver2));
+        Thread t3 = new Thread(new ThreadStart(Solver3));
+        Thread t4 = new Thread(new ThreadStart(Solver4));
+
+        t1.Start();
+        t2.Start();
+        t3.Start();
+        t4.Start();
+
+        
+
+        while (string.IsNullOrEmpty(finalStr))
+        {
+            yield return null;
+        }
+
+        while (t1.IsAlive || t2.IsAlive || t3.IsAlive || t4.IsAlive)
+        {
+            yield return null;
+        }
+
+        t1.Abort();
+        t2.Abort();
+        t3.Abort();
+        t4.Abort();
+
+        StringBuilder sb = new StringBuilder(finalStr);
+        for (int i = 0; i < emptySlots; i++)
+        {
+            sb[randomSlots[i]] = '0';
+        }
+        finalStr = sb.ToString();
+        for (int i = 0; i < 81; i++)
+        {
+            _slots[i].Value = (finalStr[i] - 48);
+        }
+
+
+        isFounded = false;
+        IsWorked = false;
+        
+
+    }
+
+
 
     public void OnClickSolveButton()
     {
@@ -156,6 +233,9 @@ public class GameManager : MonoBehaviour
     }
 
 
+
+
+
     private IEnumerator SolveRoutine()
     {
         IsWorked = true;
@@ -170,13 +250,22 @@ public class GameManager : MonoBehaviour
         t3.Start();
         t4.Start();
 
-        isFounded = false;
+        
 
         while (string.IsNullOrEmpty(finalStr))
         {
             yield return null;
         }
 
+        while (t1.IsAlive || t2.IsAlive || t3.IsAlive || t4.IsAlive)
+        {
+            yield return null;
+        }
+
+        t1.Abort();
+        t2.Abort();
+        t3.Abort();
+        t4.Abort();
 
         for (int i = 0; i < 81; i++)
         {
@@ -184,11 +273,7 @@ public class GameManager : MonoBehaviour
         }
 
         IsWorked = false;
-
-        t1.Abort();
-        t2.Abort();
-        t3.Abort();
-        t4.Abort();
+        isFounded = false;
 
         Debug.Log(finalStr);
     }
@@ -235,19 +320,24 @@ public class GameManager : MonoBehaviour
     }
 
     private static readonly object lockObj = new object();
+
     private static bool isFounded = false;
     private static void SetFinalString(string str , int founder)
     {
+
         lock (lockObj)
         {
-            if (!isFounded)
+            if (isFounded)
             {
-                isFounded = true;
-                finalStr = str;
-                Debug.Log("Thread : " + founder);
+                Debug.Log(" founded : " + founder);
+                return;
             }
-
+            finalStr = str;
+            isFounded = true;
+            Debug.Log("Thread : " + founder);
         }
+        Debug.Log(" Lock : " + founder);
+
     }
 
     private static bool IsValid(StringBuilder str, int position, int val)
@@ -294,14 +384,16 @@ public class GameManager : MonoBehaviour
     private static string finalStr;
     private static bool Recursive(StringBuilder str,int position,int[] array,int t)
     {
-        //Debug.Log(str +" "+size);
+        if (isFounded)
+        {
+            return true;
+        }
 
         if(position >= 81)
         {
             SetFinalString(str.ToString(),t);
             return true;
         }
-
 
         if(str[position] != '0')
         {
@@ -327,16 +419,16 @@ public class GameManager : MonoBehaviour
 
     private static bool RecursiveBack(StringBuilder str, int position, int[] array, int t)
     {
-        //Debug.Log(str +" "+size);
-
-
+        if (isFounded)
+        {
+            return true;
+        }
 
         if (position < 0)
         {
             SetFinalString(str.ToString(),t);
             return true;
         }
-
 
         if (str[position] != '0')
         {
