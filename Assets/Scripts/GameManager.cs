@@ -153,13 +153,9 @@ public class GameManager : MonoBehaviour
 
         Thread t1 = new Thread(new ThreadStart(Solver1));
         Thread t2 = new Thread(new ThreadStart(Solver2));
-        Thread t3 = new Thread(new ThreadStart(Solver3));
-        Thread t4 = new Thread(new ThreadStart(Solver4));
 
         t1.Start();
         t2.Start();
-        t3.Start();
-        t4.Start();
 
 
         while (string.IsNullOrEmpty(finalStr))
@@ -167,15 +163,13 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        while (t1.IsAlive || t2.IsAlive || t3.IsAlive || t4.IsAlive)
+        while (t1.IsAlive || t2.IsAlive)
         {
             yield return null;
         }
 
         t1.Abort();
         t2.Abort();
-        t3.Abort();
-        t4.Abort();
 
         StringBuilder sb = new StringBuilder(finalStr);
         for (int i = 0; i < emptySlots; i++)
@@ -237,13 +231,9 @@ public class GameManager : MonoBehaviour
 
         Thread t1 = new Thread(new ThreadStart(Solver1));
         Thread t2 = new Thread(new ThreadStart(Solver2));
-        Thread t3 = new Thread(new ThreadStart(Solver3));
-        Thread t4 = new Thread(new ThreadStart(Solver4));
 
         t1.Start();
         t2.Start();
-        t3.Start();
-        t4.Start();
 
         
 
@@ -252,15 +242,13 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
-        while (t1.IsAlive || t2.IsAlive || t3.IsAlive || t4.IsAlive)
+        while (t1.IsAlive || t2.IsAlive)
         {
             yield return null;
         }
 
         t1.Abort();
         t2.Abort();
-        t3.Abort();
-        t4.Abort();
 
         for (int i = 0; i < 81; i++)
         {
@@ -286,31 +274,12 @@ public class GameManager : MonoBehaviour
         Recursive(new StringBuilder(initialString), 0, array1,1);
     }
 
-
     private static int[] array2 = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     private static void Solver2()
     {
         System.Random rnd = new System.Random();
         array2 = array2.OrderBy(x => rnd.Next()).ToArray();
-        Recursive(new StringBuilder(initialString), 0, array2,2);
-    }
-
-    
-    private static int[] array3 = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    private static void Solver3()
-    {
-        System.Random rnd = new System.Random();
-        array3 = array3.OrderBy(x => rnd.Next()).ToArray();
-        RecursiveBack(new StringBuilder(initialString), 80, array3,3);
-
-    }
-
-    private static int[] array4 = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-    private static void Solver4()
-    {
-        System.Random rnd = new System.Random();
-        array4 = array4.OrderBy(x => rnd.Next()).ToArray();
-        RecursiveBack(new StringBuilder(initialString), 80, array4,4);
+        RecursiveBack(new StringBuilder(initialString), 80, array2,2);
 
     }
 
