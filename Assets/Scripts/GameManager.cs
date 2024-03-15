@@ -38,7 +38,8 @@ public class GameManager : MonoBehaviour
         Slots = new Slot[_slots.Length];
         for (int i = 0; i < _slots.Length; i++)
         {
-            _slots[i].GetComponent<Button>().onClick.AddListener(() => OnClickSlot(i));
+            int index = i;
+            _slots[i].GetComponent<Button>().onClick.AddListener(() => OnClickSlot(index));
             Slots[i] = _slots[i].AddComponent<Slot>();
             Slots[i].Create();
         }
@@ -65,6 +66,7 @@ public class GameManager : MonoBehaviour
 
     public void OnClickSlot(int slotIndex)
     {
+        Debug.Log(slotIndex);
         SelectedSlot = Slots[slotIndex];
     }
 
